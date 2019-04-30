@@ -40,5 +40,6 @@ setup(
         'lxml>=4.2.4',
         'requests-futures>=0.9.7',
         'requests[security]>=2.20.0',
+        'cssutils==1.0.2'
     ],
 )
