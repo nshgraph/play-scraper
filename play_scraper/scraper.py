@@ -296,7 +296,7 @@ class PlayScraper(object):
             'reviewType': 0,
             'pageNum': page,
             'id': app_id,
-            'reviewSortOrder': 4,
+            'reviewSortOrder': 0,
             'xhr': 1,
             'hl': self.language
         }
