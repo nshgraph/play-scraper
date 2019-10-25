@@ -31,6 +31,7 @@ from play_scraper.utils import (
     parse_cluster_card_info,
     send_request,
 )
+from play_scraper.reviews import process_full_reviews
 
 
 class PlayScraper(object):
@@ -296,7 +297,7 @@ class PlayScraper(object):
 
         return categories
 
-    def reviews(self, app_id, page=1):
+    def reviews(self, app_id, max_records=None, earliest_record=None):
         """Sends a POST request and retrieves a list of reviews for
         the specified app.
 
@@ -305,48 +306,14 @@ class PlayScraper(object):
         :return: a list of reviews
         """
         data = {
+            'appId': app_id,
+            'sort': 2,
             'reviewType': 0,
-            'pageNum': page,
-            'id': app_id,
-            'reviewSortOrder': 0,
-            'xhr': 1,
-            'hl': self.language
+            'lang':  self.language,
+            'country': self.geolocation,
+            'max_records': max_records,
+            'earliest_record': earliest_record
         }
-        self.params['authuser'] = '0'
-
-        response = send_request('POST', s.REVIEW_URL, data, self.params)
-        content = response.text
-        content = content[content.find('[["ecr"'):].strip()
-        data = json.loads(content)
-        html = data[0][2]
-        soup = BeautifulSoup(html, 'lxml', from_encoding='utf8')
-
-        reviews = []
-        for element in soup.select('.single-review'):
-            review = {}
-
-            avatar_style = element.select_one('.author-image').get('style')
-            if avatar_style:
-                sheet = cssutils.css.CSSStyleSheet()
-                sheet.add('tmp { %s }' % avatar_style)
-                review['author_image'] = list(cssutils.getUrls(sheet))[0]
-
-            review_header = element.select_one('.review-header')
-            review['review_id'] = review_header.get('data-reviewid', '')
-            review['review_permalink'] = review_header.select_one('.reviews-permalink').get('href')
-
-            review['author_name'] = review_header.select_one('.author-name').text
-            review['review_date'] = review_header.select_one('.review-date').text
-
-            curr_rating = review_header.select_one('.current-rating').get('style')
-            review['current_rating'] = int(int(str(cssutils.parseStyle(curr_rating).width).replace('%', '')) / 20)
-
-            body_elem = element.select_one('.review-body')
-            review_title = body_elem.select_one('.review-title').extract()
-            body_elem.select_one('.review-link').decompose()
-            review['review_title'] = review_title.text
-            review['review_body'] = body_elem.text
-
-            reviews.append(review)
+        reviews = process_full_reviews(data)
 
         return reviews
