@@ -101,7 +101,7 @@ def categories(hl="en", gl="us", ignore_promotions=True):
     return s.categories(ignore_promotions)
 
 
-def reviews(app_id, page=1, hl='en', gl='us'):
+def reviews(app_id, page=1, hl='en', gl='us', max_records=None, since=None):
     """Sends a POST request and retrieves a list of reviews for
     the specified app.
 
@@ -110,4 +110,4 @@ def reviews(app_id, page=1, hl='en', gl='us'):
     :return: a list of reviews
     """
     s = scraper.PlayScraper(hl, gl)
-    return s.reviews(app_id, page)
+    return s.reviews(app_id, max_records, since)
