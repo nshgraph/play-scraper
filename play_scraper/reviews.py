@@ -193,17 +193,6 @@ def getBodyForRequests (
 
     return formBody[requestType]
 
-def process_and_recur (html, opts, saved_reviews, mappings, remaining_iterations):
-    if type(html) == str:
-        html = scriptData.parse(html)
-
-    reviews = extract(mappings["reviews"], html, opts["appId"])
-    token = r_path(mappings["token"], html)
-    opts["requestType"] = REQUEST_TYPE.paginated
-
-    saved_reviews.extend(reviews)
-
-    return check_finished(opts, saved_reviews, token, remaining_iterations)
 
 def check_finished (opts, saved_reviews, nextToken, remaining_iterations = MAX_ITERATIONS):
     # this is where we should check that we have enough / time based check
@@ -221,13 +210,14 @@ def check_finished (opts, saved_reviews, nextToken, remaining_iterations = MAX_I
     headers = {
         'Content-Type': 'application/x-www-form-urlencodedcharset=UTF-8'
     }
+    
     _log.info('Pulling data. Have {} records'.format(len(saved_reviews)))
     url = "{}/_/PlayStoreUi/data/batchexecute?rpcids=qnKhOb&f.sid=-697906427155521722&bl=boq_playuiserver_20190903.08_p0&hl={}&gl={}&authuser&soc-app=121&soc-platform=1&soc-device=1&_reqid=1065213".format(
         BASE_URL,
         opts["lang"],
         opts["country"]
         )
-    time.sleep(1)
+    time.sleep(0.5)
     response = send_request('POST', url, data=body, allow_redirects=True)
 
     input_data = json.loads(response.text[5:])
@@ -237,7 +227,16 @@ def check_finished (opts, saved_reviews, nextToken, remaining_iterations = MAX_I
     if not data:
         return saved_reviews
 
-    return process_and_recur(data, opts, saved_reviews, REQUEST_MAPPINGS, remaining_iterations - 1)
+    if type(data) == str:
+        data = scriptData.parse(data)
+
+    reviews = extract(REQUEST_MAPPINGS["reviews"], data, opts["appId"])
+    token = r_path(REQUEST_MAPPINGS["token"], data)
+    opts["requestType"] = REQUEST_TYPE.paginated
+
+    saved_reviews.extend(reviews)
+
+    return check_finished(opts, saved_reviews, token, remaining_iterations)
 
 def process_full_reviews (opts):
     opts["requestType"] = REQUEST_TYPE.initial
