@@ -8,12 +8,16 @@ import copy
 import json
 import time
 import datetime
+import logging
 from enum import Enum
 
 try:
     from functools import reduce, map
 except ImportError:
     pass
+
+
+_log = logging.getLogger(__name__)
 
 from play_scraper.utils import send_request
 
@@ -22,6 +26,8 @@ REQUEST_MAPPINGS = {
   "reviews": [0],
   "token": [1, 1]
 }
+
+MAX_ITERATIONS = 100
 
 def generateDate (dateArray):
     if not dateArray:
@@ -187,7 +193,7 @@ def getBodyForRequests (
 
     return formBody[requestType]
 
-def process_and_recur (html, opts, saved_reviews, mappings):
+def process_and_recur (html, opts, saved_reviews, mappings, remaining_iterations):
     if type(html) == str:
         html = scriptData.parse(html)
 
@@ -197,9 +203,9 @@ def process_and_recur (html, opts, saved_reviews, mappings):
 
     saved_reviews.extend(reviews)
 
-    return check_finished(opts, saved_reviews, token)
+    return check_finished(opts, saved_reviews, token, remaining_iterations)
 
-def check_finished (opts, saved_reviews, nextToken):
+def check_finished (opts, saved_reviews, nextToken, remaining_iterations = MAX_ITERATIONS):
     # this is where we should check that we have enough / time based check
     if ( not nextToken
         or (opts["max_records"] > 0  and len(saved_reviews) >= opts["max_records"])
@@ -215,6 +221,7 @@ def check_finished (opts, saved_reviews, nextToken):
     headers = {
         'Content-Type': 'application/x-www-form-urlencodedcharset=UTF-8'
     }
+    _log.info('Pulling data. Have {} records'.format(len(saved_reviews)))
     url = "{}/_/PlayStoreUi/data/batchexecute?rpcids=qnKhOb&f.sid=-697906427155521722&bl=boq_playuiserver_20190903.08_p0&hl={}&gl={}&authuser&soc-app=121&soc-platform=1&soc-device=1&_reqid=1065213".format(
         BASE_URL,
         opts["lang"],
@@ -222,7 +229,6 @@ def check_finished (opts, saved_reviews, nextToken):
         )
     time.sleep(1)
     response = send_request('POST', url, data=body, allow_redirects=True)
-    # response = requests.post(url, data=body, allow_redirects=True,headers=headers)
 
     input_data = json.loads(response.text[5:])
     if not input_data[0][2]:
@@ -231,7 +237,7 @@ def check_finished (opts, saved_reviews, nextToken):
     if not data:
         return saved_reviews
 
-    return process_and_recur(data, opts, saved_reviews, REQUEST_MAPPINGS)
+    return process_and_recur(data, opts, saved_reviews, REQUEST_MAPPINGS, remaining_iterations - 1)
 
 def process_full_reviews (opts):
     opts["requestType"] = REQUEST_TYPE.initial
