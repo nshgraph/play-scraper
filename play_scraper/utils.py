@@ -140,7 +140,7 @@ def parse_additional_info(soup):
     # This is super ugly because the CSS is obfuscated and doesn't have good
     # distinguishing selectors available; each section's markup is nearly
     # identical, so we get the values with a similar function.
-    section_titles_divs = [x for x in soup.select("div.hAyfc div.BgcNfc")]
+    section_titles_divs = [x for x in soup.select("div.wVqUob div.ClM7O")]
 
     title_normalization = {
         "Updated": "updated",
@@ -174,7 +174,7 @@ def parse_additional_info(soup):
         section_title = title_div.string
         if section_title in title_normalization:
             title_key = title_normalization[section_title]
-            value_div = title_div.next_sibling.select_one("span.htlgb")
+            value_div = title_div.next_sibling.select_one("div.g1rdde")
 
             if title_key == "content_rating":
                 # last string in list is 'Learn more' link
@@ -240,7 +240,7 @@ def parse_app_details(soup):
     :return: a dictionary of app details
     """
     title = soup.select_one('h1[itemprop="name"] span').text
-    icon = soup.select_one('img[class="T75of sHb2Xb"]').attrs["src"].split("=")[0]
+    icon = soup.select_one('img[class="T75of QhHVZd"]').attrs["src"].split("=")[0]
     editors_choice = bool(soup.select_one('meta[itemprop="editorsChoiceBadgeUrl"]'))
 
     # Main category will be first
@@ -314,12 +314,12 @@ def parse_app_details(soup):
 
     free = price == "0"
 
-    additional_info_data = parse_additional_info(soup.select_one(".IxB2fe"))
+    additional_info_data = parse_additional_info(soup.select_one(".w7Iutd"))
 
     offers_iap = bool(additional_info_data.get("iap_range"))
 
     try:
-        dev_id = soup.select_one("a.hrTbp.R8zArc").attrs["href"].split("=")[1]
+        dev_id = soup.select_one("div.Vbfug.auoIOc a").attrs["href"].split("=")[1]
     except IndexError:
         dev_id = None
     developer_id = dev_id if dev_id else None
