@@ -78,9 +78,7 @@ def build_collection_url(category="", collection=""):
     if collection:
         collection = "/collection/{col}".format(col=collection)
 
-    url = "{base}{category}{collection}".format(
-        base=s.BASE_URL, category=category, collection=collection
-    )
+    url = "{base}{category}{collection}".format(base=s.BASE_URL, category=category, collection=collection)
 
     return url
 
@@ -240,25 +238,21 @@ def parse_app_details(soup):
     :return: a dictionary of app details
     """
     title = soup.select_one('h1[itemprop="name"] span').text
-    icon = soup.select_one('img[class="T75of QhHVZd"]').attrs["src"].split("=")[0]
+    icon = soup.select_one('img[class="T75of QhHVZd"]')
+    if icon:
+        icon = icon.attrs["src"].split("=")[0]
     editors_choice = bool(soup.select_one('meta[itemprop="editorsChoiceBadgeUrl"]'))
 
     # Main category will be first
-    category = [
-        c.attrs["href"].split("/")[-1] for c in soup.select('a[itemprop="genre"]')
-    ]
+    category = [c.attrs["href"].split("/")[-1] for c in soup.select('a[itemprop="genre"]')]
 
     # Let the user handle modifying the URL to fetch different resolutions
     # Removing the end `=w720-h310-rw` doesn't seem to give original res?
     # Check 'src' and 'data-src' since it can be one or the other
-    screenshots = [
-        parse_screenshot_src(img) for img in soup.select("button.Q4vdJd img.DYfLw")
-    ]
+    screenshots = [parse_screenshot_src(img) for img in soup.select("button.Q4vdJd img.DYfLw")]
 
     try:
-        video = soup.select_one('button[data-trailer-url^="https"]').attrs.get(
-            "data-trailer-url"
-        )
+        video = soup.select_one('button[data-trailer-url^="https"]').attrs.get("data-trailer-url")
         if video is not None:
             video = video.split("?")[0]
     except AttributeError:
@@ -279,15 +273,10 @@ def parse_app_details(soup):
 
     histogram = {}
     try:
-        reviews = int(
-            soup.select_one('span[aria-label$="ratings"]').text.replace(",", "")
-        )
+        reviews = int(soup.select_one('span[aria-label$="ratings"]').text.replace(",", ""))
         ratings_section = soup.select_one("div.VEF2C")
         num_ratings = [
-            int(rating.attrs["title"].replace(",", ""))
-            if rating.attrs.get("title")
-            else None
-            for rating in ratings_section.select('div span[style^="width:"]')
+            int(rating.attrs["title"].replace(",", "")) if rating.attrs.get("title") else None for rating in ratings_section.select('div span[style^="width:"]')
         ]
         for i in range(5):
             histogram[5 - i] = num_ratings[i]
@@ -297,9 +286,7 @@ def parse_app_details(soup):
     try:
 
         changes_soup = soup.select('div[itemprop="description"] content')[1]
-        recent_changes = "\n".join(
-            [x.string.strip() if x.string is not None else "" for x in changes_soup]
-        )
+        recent_changes = "\n".join([x.string.strip() if x.string is not None else "" for x in changes_soup])
     except (IndexError, AttributeError):
         recent_changes = None
 
@@ -442,9 +429,7 @@ def parse_card_info(soup):
     """
     app_id = soup.attrs["data-docid"]
     url = urljoin(s.BASE_URL, soup.select_one("a.card-click-target").attrs["href"])
-    icon = urljoin(
-        s.BASE_URL, soup.select_one("img.cover-image").attrs["src"].split("=")[0]
-    )
+    icon = urljoin(s.BASE_URL, soup.select_one("img.cover-image").attrs["src"].split("=")[0])
     title = soup.select_one("a.title").attrs["title"]
 
     dev_soup = soup.select_one("a.subtitle")
@@ -507,9 +492,7 @@ def parse_app_details_response_hook(response, *args, **kwargs):
     response.app_details_data = details
 
 
-def multi_futures_app_request(
-    app_ids, headers=None, verify=True, params=None, workers=s.CONCURRENT_REQUESTS
-):
+def multi_futures_app_request(app_ids, headers=None, verify=True, params=None, workers=s.CONCURRENT_REQUESTS):
     """
     :param app_ids: a list of app IDs.
     :param headers: a dictionary of custom headers to use.
@@ -538,10 +521,6 @@ def multi_futures_app_request(
             app_json.update({"app_id": app_ids[i], "url": result.url})
             apps.append(response.result().app_details_data)
         except requests.exceptions.RequestException as e:
-            log.error(
-                "Error occurred fetching {app}: {err}".format(
-                    app=app_ids[i], err=str(e)
-                )
-            )
+            log.error("Error occurred fetching {app}: {err}".format(app=app_ids[i], err=str(e)))
 
     return apps
