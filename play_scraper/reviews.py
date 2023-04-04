@@ -198,7 +198,8 @@ def check_finished (opts, saved_reviews, nextToken, remaining_iterations = MAX_I
     # this is where we should check that we have enough / time based check
     if ( not nextToken
         or (opts["max_records"] > 0  and len(saved_reviews) >= opts["max_records"])
-        or (opts["earliest_record"] and len(saved_reviews) and saved_reviews[-1]["review_date"] < opts["earliest_record"])):
+        or (opts["earliest_record"] and len(saved_reviews) and saved_reviews[-1]["review_date"] < opts["earliest_record"])
+        or remaining_iterations <= 0):
         return saved_reviews
     
     body = getBodyForRequests(
@@ -236,7 +237,7 @@ def check_finished (opts, saved_reviews, nextToken, remaining_iterations = MAX_I
 
     saved_reviews.extend(reviews)
 
-    return check_finished(opts, saved_reviews, token, remaining_iterations)
+    return check_finished(opts, saved_reviews, token, remaining_iterations - 1)
 
 def process_full_reviews (opts):
     opts["requestType"] = REQUEST_TYPE.initial
