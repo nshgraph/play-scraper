@@ -237,7 +237,7 @@ def parse_app_details(soup):
     :param soup: a strained BeautifulSoup object of an app
     :return: a dictionary of app details
     """
-    title = soup.select_one('h1[itemprop="name"]').text
+    title = soup.select_one('[itemprop="name"]').text
     icon = soup.select_one('img[class="T75of QhHVZd"]')
     if icon:
         icon = icon.attrs["src"].split("=")[0]
